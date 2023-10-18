@@ -1,4 +1,6 @@
-﻿namespace WindowsFileUtils.Services;
+﻿using System.Runtime.InteropServices.ComTypes;
+
+namespace WindowsFileUtils.Services;
 
 public class SubfolderUnpacker
 {
@@ -16,7 +18,7 @@ public class SubfolderUnpacker
         Console.WriteLine("Please enter a directory to completely unpack all subfolders:");
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Green;
-        var rootDirectory = Path.GetFullPath(Console.ReadLine() ?? string.Empty);
+        var rootDirectory = new DirectoryInfo(Path.GetFullPath(Console.ReadLine() ?? string.Empty));
         Console.ResetColor();
         Console.WriteLine();
 
@@ -30,22 +32,71 @@ public class SubfolderUnpacker
         Console.WriteLine();
         Console.WriteLine("Press enter to continue.");
         Console.ReadLine();
+
+        _errorCount = 0;
+        _folderCount = 0;
+        _fileCount = 0;
+
+        Console.Clear();
+        UnpackSubfoldersToRoot(rootDirectory, rootDirectory);
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Moved {_fileCount} files to root directory.");
+        if (_errorCount > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"{_errorCount} files failed.");
+        }
+        Console.ResetColor();
+        Console.WriteLine();
+        Console.ReadLine();
     }
 
-    private void CountFilesAndFolders(string directory)
+    private void CountFilesAndFolders(DirectoryInfo directory)
     {
         try
         {
             _folderCount++;
-            _fileCount += Directory.GetFiles(directory).Length;
+            _fileCount += directory.GetFiles().Length;
 
-            string[] subdirectories = Directory.GetDirectories(directory);
-            foreach (string folder in subdirectories)
+            var subdirectories = directory.GetDirectories();
+            foreach (DirectoryInfo folder in subdirectories)
                 CountFilesAndFolders(folder);
         }
-        catch (UnauthorizedAccessException)
+        catch (Exception)
         {
             _errorCount++;
+        }
+    }
+
+    private void UnpackSubfoldersToRoot(DirectoryInfo root, DirectoryInfo directory)
+    {
+        foreach (var file in directory.GetFiles())
+        {
+            try
+            {
+                Console.WriteLine($"{file.FullName}");
+                file.MoveTo($@"{root.FullName}\{file.Name}");
+                _fileCount++;
+            }
+            catch
+            {
+                _errorCount++;
+            }
+        }
+
+        foreach (var folder in directory.GetDirectories())
+        {
+            try
+            {
+                UnpackSubfoldersToRoot(root, folder);
+                _folderCount++;
+                folder.Delete();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }
