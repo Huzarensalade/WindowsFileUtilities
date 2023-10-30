@@ -7,6 +7,7 @@ public class SubfolderUnpacker
     private int _fileCount = 0;
     private int _folderCount = 0;
     private int _errorCount = 0;
+    private int _renameCount = 0;
 
     public void Run()
     {
@@ -33,9 +34,7 @@ public class SubfolderUnpacker
         Console.WriteLine("Press enter to continue.");
         Console.ReadLine();
 
-        _errorCount = 0;
-        _folderCount = 0;
-        _fileCount = 0;
+        ResetCounters();
 
         Console.Clear();
         UnpackSubfoldersToRoot(rootDirectory, rootDirectory);
@@ -46,6 +45,11 @@ public class SubfolderUnpacker
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{_errorCount} files failed.");
+        }
+        if (_renameCount > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"{_renameCount} duplicate files renamed.");
         }
         Console.ResetColor();
         Console.WriteLine();
@@ -73,10 +77,33 @@ public class SubfolderUnpacker
     {
         foreach (var file in directory.GetFiles())
         {
+            if (file.DirectoryName == root.FullName)
+                continue;
+
             try
             {
+                var foundDuplicate = true;
+                var newFileName = file.Name;
+                var incrementalSuffix = 0;
+
+                while (foundDuplicate)
+                {
+                    if (root.GetFiles().Any(x => x.Name == newFileName))
+                    {
+                        incrementalSuffix++;
+                        newFileName = $"{file.Name}_{incrementalSuffix}";
+                    }
+                    else
+                    {
+                        foundDuplicate = false;
+                    }
+                }
+
+                if (newFileName != root.Name)
+                    _renameCount++;
+
                 Console.WriteLine($"{file.FullName}");
-                file.MoveTo($@"{root.FullName}\{file.Name}");
+                file.MoveTo($@"{root.FullName}\{newFileName}");
                 _fileCount++;
             }
             catch
@@ -98,5 +125,13 @@ public class SubfolderUnpacker
                 // ignored
             }
         }
+    }
+
+    private void ResetCounters()
+    {
+        _fileCount = 0;
+        _folderCount = 0;
+        _errorCount = 0;
+        _renameCount = 0;
     }
 }
