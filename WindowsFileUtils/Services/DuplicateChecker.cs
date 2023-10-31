@@ -58,7 +58,7 @@ public class DuplicateChecker
         var duplicateList = new List<string>();
         foreach (var compareFile in allFiles)
         {
-            var sameSizeFiles = folder.GetFiles().Where(x => x.Name != compareFile.Name && x.Length != compareFile.Length);
+            var sameSizeFiles = folder.GetFiles().Where(x => x.Name != compareFile.Name && x.Length == compareFile.Length);
             if (!sameSizeFiles.Any())
                 return duplicateList;
 
@@ -66,8 +66,22 @@ public class DuplicateChecker
             {
                 try
                 {
-                    if (File.ReadAllBytes(sameSizeFile.FullName) == File.ReadAllBytes(compareFile.FullName))
-                        duplicateList.Add(sameSizeFile.FullName);
+                    var checkFile = File.ReadAllBytes(sameSizeFile.FullName);
+                    var originFile = File.ReadAllBytes(compareFile.FullName);
+                    var foundDiffChar = false;
+
+                    for (int i = 0; i < originFile.Length; i++)
+                    {
+                        if (checkFile[i] != originFile[i])
+                        {
+                            foundDiffChar = true;
+                            i = originFile.Length;
+                        }
+                    }
+
+                    if (!foundDiffChar)
+                        if (!duplicateList.Any(x => x == sameSizeFile.FullName))
+                            duplicateList.Add(sameSizeFile.FullName);
                 }
                 catch
                 {
