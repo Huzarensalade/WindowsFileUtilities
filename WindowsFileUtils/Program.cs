@@ -18,18 +18,19 @@ while (!isSelected)
 {
     Console.SetCursorPosition(left, top);
 
-    Console.WriteLine($"{(option == 1 ? decorator : "   ")}Folder unpacking tool\u001b[0m");
+    Console.WriteLine($"{(option == 1 ? decorator : "   ")}Folder Unpacking tool\u001b[0m");
+    Console.WriteLine($"{(option == 2 ? decorator : "   ")}Duplicate File Detector tool\u001b[0m");
 
     key = Console.ReadKey(false);
 
     switch (key.Key)
     {
         case ConsoleKey.UpArrow:
-            option = option == 1 ? 3 : option - 1;
+            option = option == 1 ? 2 : option - 1;
             break;
 
         case ConsoleKey.DownArrow:
-            option = option == 3 ? 1 : option + 1;
+            option = option == 2 ? 1 : option + 1;
             break;
 
         case ConsoleKey.Enter:
@@ -41,7 +42,11 @@ while (!isSelected)
 switch (option)
 {
     case 1:
-        var service = new SubfolderUnpacker();
-        service.Run();
+        var subfolderUnpacker = new SubfolderUnpacker();
+        subfolderUnpacker.Run();
+        break;
+    case 2:
+        var duplicateChecker = new DuplicateChecker();
+        duplicateChecker.Run();
         break;
 }

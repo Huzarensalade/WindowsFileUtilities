@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-
-namespace WindowsFileUtils.Services;
+﻿namespace WindowsFileUtils.Services;
 
 public class SubfolderUnpacker
 {
@@ -23,9 +21,8 @@ public class SubfolderUnpacker
         Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine("Scanning Directories");
+        Console.WriteLine("Scanning directories");
         CountFilesAndFolders(rootDirectory);
-        Thread.Sleep(1000);
         var foundText = $"Found {_fileCount} files in {_folderCount} folders.";
         if (_errorCount > 0)
             foundText += $" {_errorCount} folders were inaccessible";
