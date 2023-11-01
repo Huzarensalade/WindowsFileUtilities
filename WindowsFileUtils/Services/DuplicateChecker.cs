@@ -23,7 +23,7 @@ public class DuplicateChecker
 
         Console.WriteLine("Scanning for duplicates");
         var duplicates = ScanDuplicates(selectedFolder);
-        var foundText = duplicates.Count > 0 ? $"Found {duplicates.Count} duplicates." : $"No duplicates where found";
+        var foundText = $"Found {duplicates.Count} unique files in {_fileCount} checked files";
         Console.WriteLine(foundText);
         if (_errorCount > 0)
         {
@@ -52,15 +52,22 @@ public class DuplicateChecker
         Console.ReadLine();
     }
 
-    private List<string> ScanDuplicates(DirectoryInfo folder)
+    private List<FileInfo> ScanDuplicates(DirectoryInfo folder)
     {
         var allFiles = folder.GetFiles();
-        var duplicateList = new List<string>();
+        var uniqueList = new List<FileInfo>();
+
         foreach (var compareFile in allFiles)
         {
-            var sameSizeFiles = folder.GetFiles().Where(x => x.Name != compareFile.Name && x.Length == compareFile.Length);
+            _fileCount++;
+
+            var sameSizeFiles = uniqueList.Where(x => x.Length == compareFile.Length);
+
             if (!sameSizeFiles.Any())
-                return duplicateList;
+            {
+                uniqueList.Add(compareFile);
+                continue;
+            }
 
             foreach (var sameSizeFile in sameSizeFiles)
             {
@@ -68,46 +75,52 @@ public class DuplicateChecker
                 {
                     var checkFile = File.ReadAllBytes(sameSizeFile.FullName);
                     var originFile = File.ReadAllBytes(compareFile.FullName);
-                    var foundDiffChar = false;
 
                     for (int i = 0; i < originFile.Length; i++)
                     {
                         if (checkFile[i] != originFile[i])
                         {
-                            foundDiffChar = true;
-                            i = originFile.Length;
+                            uniqueList.Add(compareFile);
+                            goto FoundUniqueFileBreakpoint;
                         }
                     }
-
-                    if (!foundDiffChar)
-                        if (!duplicateList.Any(x => x == sameSizeFile.FullName))
-                            duplicateList.Add(sameSizeFile.FullName);
                 }
                 catch
                 {
                     _errorCount++;
                 }
             }
+
+            FoundUniqueFileBreakpoint: ;
         }
 
-        return duplicateList;
+        return uniqueList;
     }
 
-    private void MoveDuplicates(List<string> duplicateFilePaths, DirectoryInfo root)
+    private void MoveDuplicates(List<FileInfo> uniqueFiles, DirectoryInfo root)
     {
-        var newFolder = Directory.CreateDirectory($@"{root.FullName}\{Guid.NewGuid()}");
-        foreach (var filePath in duplicateFilePaths)
+        Console.ForegroundColor = ConsoleColor.Green;
+
+        var currentDate = DateTime.Now;
+        var newFolder = Directory.CreateDirectory($@"{root.FullName}\Duplicates_{currentDate.Day}{currentDate.Month}{currentDate.Year}");
+        var allFiles = root.GetFiles();
+        foreach (var file in allFiles)
         {
-            var file = new FileInfo(filePath);
-            
+            if (uniqueFiles.Any(x => x.FullName == file.FullName))
+                continue;
+
             try
             {
                 file.MoveTo($@"{newFolder.FullName}\{file.Name}");
+                Console.WriteLine(file.FullName);
                 _fileCount++;
             }
             catch
             {
                 _errorCount++;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(file.FullName);
+                Console.ForegroundColor = ConsoleColor.Green;
             }
         }
     }

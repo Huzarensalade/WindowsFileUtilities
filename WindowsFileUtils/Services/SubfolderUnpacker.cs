@@ -72,6 +72,8 @@ public class SubfolderUnpacker
 
     private void UnpackSubfoldersToRoot(DirectoryInfo root, DirectoryInfo directory)
     {
+        Console.ForegroundColor = ConsoleColor.Green;
+
         foreach (var file in directory.GetFiles())
         {
             if (file.DirectoryName == root.FullName)
@@ -99,13 +101,16 @@ public class SubfolderUnpacker
                 if (newFileName != root.Name)
                     _renameCount++;
 
-                Console.WriteLine($"{file.FullName}");
                 file.MoveTo($@"{root.FullName}\{newFileName}");
+                Console.WriteLine($"{file.FullName}");
                 _fileCount++;
             }
             catch
             {
                 _errorCount++;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(file.FullName);
+                Console.ForegroundColor = ConsoleColor.Green;
             }
         }
 
