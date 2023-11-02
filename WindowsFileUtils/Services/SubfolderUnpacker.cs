@@ -90,7 +90,7 @@ public class SubfolderUnpacker
                     if (root.GetFiles().Any(x => x.Name == newFileName))
                     {
                         incrementalSuffix++;
-                        newFileName = $"{file.Name}_{incrementalSuffix}";
+                        newFileName = $"{file.Name.Replace(file.Extension, string.Empty)}_{incrementalSuffix}{file.Extension}";
                     }
                     else
                     {
